@@ -51,6 +51,13 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
         default=False # Stored on Videofront by default
     )
 
+    is_bokecc_video = Boolean(
+        help=ugettext_lazy("Is this video stored on Bokecc?"),
+        display_name=ugettext_lazy("Video storage"),
+        scope=Scope.settings,
+        default=False # Stored on Videofront by default
+    )
+
     allow_download = Boolean(
         help=ugettext_lazy("Allow students to download this video."),
         display_name=ugettext_lazy("Video download allowed"),
@@ -58,14 +65,17 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
         default=True
     )
 
-    editable_fields = ('display_name', 'video_id', 'is_youtube_video', 'allow_download', )
+    editable_fields = ('display_name', 'video_id', 'is_youtube_video', 'is_bokecc_video', 'allow_download', )
 
     def __init__(self, *args, **kwargs):
         super(LibcastXBlock, self).__init__(*args, **kwargs)
 
     @property
     def course_key_string(self):
-        return unicode(self.location.course_key)
+        try:
+            return unicode(self.location.course_key)
+        except AttributeError:
+            return ''
 
     @property
     def resource_slug(self):
@@ -110,6 +120,8 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
         fragment = Fragment()
         if self.is_youtube_video and self.video_id:
             self.get_youtube_content(fragment)
+        if self.is_bokecc_video and self.video_id:
+            self.get_bokecc_content(fragment)
         else:
             self.get_videofront_content(fragment)
         return fragment
@@ -222,7 +234,46 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
             'element_id': element_id
         })
 
+    def get_bokecc_content(self, fragment):
+        from videoproviders.api import bokecc
+        # iframe element id
+        element_id = ''.join([random.choice(string.ascii_lowercase) for _ in range(0, 20)])
+        # This part will need to be moved into fun-apps as a VideoClient
+        bokecc_client = bokecc.Client(self.course_key_string)
+        video = bokecc_client.get_video(self.resource_slug)
+
+        # Add html code
+        template_content = self.resource_string("public/html/bokecc.html")
+        template = Template(template_content)
+        context = {
+            'display_name': self.display_name,
+            'video_id': self.resource_slug,
+            'js_script_url': video['js_script_url'],
+            'element_id': element_id
+        }
+        content = template.render(Context(context))
+        fragment.add_content(content)
+
+        # Add bokeecc event logger
+        fragment.add_javascript(self.resource_string("public/js/bokecc.js"))
+        fragment.initialize_js("BokeccPlayer", json_args={
+            'course_id': self.course_key_string,
+            'video_id': self.resource_slug,
+            'element_id': element_id
+        })
+
     def resource_string(self, path):
         """Handy helper for getting resources from our kit."""
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
+
+    @staticmethod
+    def workbench_scenarios():
+        """
+        Define default workbench scenarios
+        """
+        return [
+            ("A little Video", """
+                    <libcast_xblock video_id="06C1C538BF97169B9C33DC5901307461" xblock-family="xblock.v1" is_bokecc_video="true"/>
+             """),
+        ]
