@@ -68,10 +68,7 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
 
     @property
     def editable_fields(self):
-        fields = ('display_name', 'video_id', 'is_youtube_video', 'allow_download')
-        adways_courses = getattr(django_settings, 'ENABLE_ADWAYS_FOR_COURSES', [])
-        if self.course_key_string in adways_courses:
-            fields += ('adways_id',)
+        fields = ('display_name', 'video_id', 'is_youtube_video', 'allow_download', 'adways_id')
         return fields
 
     def __init__(self, *args, **kwargs):
