@@ -137,6 +137,7 @@ class LibcastXBlock(StudioEditableXBlockMixin, XBlock):
         fragment.initialize_js("YoutubePlayer", json_args={
             'course_id': self.course_key_string,
             'video_id': self.resource_slug,
+            'adways_id': self.adways_id,
             'element_id': element_id
         })
 

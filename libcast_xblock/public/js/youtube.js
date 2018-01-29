@@ -10,34 +10,51 @@ function YoutubePlayer(runtime, element, args) {
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // This function gets called after the youtube script was inserted
-    window.onYouTubeIframeAPIReady = function() {
-        var onPlayerReady = function(e) {
-            log('video_player_ready');
-        };
+        if (args.adways_id) {
+            var experience = new adways.interactive.Experience();
+            experience.setPublicationID(args.adways_id);
+            experience.setPlayerClass("youtube");
+            window.onYouTubeIframeAPIReady = function() {
+                new YT.Player(args.element_id, {
+                    events: {
+                        'onReady': function(event) {
+                            experience.setPlayerAPI(event.target);
+                            experience.load();
+                        }
+                    }
+                });
+            };
+        } else {
+            // This function gets called after the youtube script was inserted
+            window.onYouTubeIframeAPIReady = function() {
+                var onPlayerReady = function(e) {
+                    log('video_player_ready');
+                };
 
-        var onPlayerStateChanged = function(e) {
-            // Note that there is no event for seeking in the video
-            if (e.data == YT.PlayerState.UNSTARTED) {
-                log('load_video');
-            } else if (e.data == YT.PlayerState.ENDED) {
-                log('stop_video');
-            } else if (e.data == YT.PlayerState.PLAYING) {
-                log('play_video', {currentTime: player.getCurrentTime()});
-            } else if (e.data == YT.PlayerState.PAUSED) {
-                log('pause_video', {currentTime: player.getCurrentTime()});
-            } else if (e.data == YT.PlayerState.BUFFERING) {
-            } else if (e.data == YT.PlayerState.CUED) {
-            }
-        };
+                var onPlayerStateChanged = function(e) {
+                    // Note that there is no event for seeking in the video
+                    if (e.data == YT.PlayerState.UNSTARTED) {
+                        log('load_video');
+                    } else if (e.data == YT.PlayerState.ENDED) {
+                        log('stop_video');
+                    } else if (e.data == YT.PlayerState.PLAYING) {
+                        log('play_video', {currentTime: player.getCurrentTime()});
+                    } else if (e.data == YT.PlayerState.PAUSED) {
+                        log('pause_video', {currentTime: player.getCurrentTime()});
+                    } else if (e.data == YT.PlayerState.BUFFERING) {
+                    } else if (e.data == YT.PlayerState.CUED) {
+                    }
+                };
 
-        player = new YT.Player(args.element_id, {
-           events: {
-               'onReady': onPlayerReady,
-               'onStateChange': onPlayerStateChanged
-           }
-        });
-    };
+                player = new YT.Player(args.element_id, {
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChanged
+                    }
+                });
+            };
+        }
+
 
     // Event logging
     function log(eventName, data) {
