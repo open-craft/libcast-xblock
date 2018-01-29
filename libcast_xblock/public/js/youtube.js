@@ -1,14 +1,16 @@
 var player;
 function YoutubePlayer(runtime, element, args) {
     'use strict';
+    var require = require || RequireJS.require;
+    require(['adways-player'], function(adways) {
 
-    // Insert youtube script
-    // We need to do this even if the script was already inserted, in order to
-    // handle multiple video xblocks in the same page.
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        // Insert youtube script
+        // We need to do this even if the script was already inserted, in order to
+        // handle multiple video xblocks in the same page.
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         if (args.adways_id) {
             var experience = new adways.interactive.Experience();
@@ -56,15 +58,16 @@ function YoutubePlayer(runtime, element, args) {
         }
 
 
-    // Event logging
-    function log(eventName, data) {
-        var logInfo = {
-          course_id: args.course_id,
-          video_id: args.video_id,
-        };
-        if (data) {
-          $.extend(logInfo, data);
+        // Event logging
+        function log(eventName, data) {
+            var logInfo = {
+                course_id: args.course_id,
+                video_id: args.video_id,
+            };
+            if (data) {
+                $.extend(logInfo, data);
+            }
+            Logger.log(eventName, logInfo);
         }
-        Logger.log(eventName, logInfo);
-    }
+    });
 }
